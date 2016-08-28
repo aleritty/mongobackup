@@ -9,8 +9,7 @@ MONGO_ONLY_COLLECTION="" #-c $MONGO_ONLY_COLLECTION
 BACKUP_PREFIX="mongodb-YEAH" #BETTER NO SPACES
 BACKUP_LOCATION="/where/you/want/" #absolute path
 
-REMOVE_OLD_BACKUP="true"
-KEEP_NUM=10
+KEEP_NUM=10 #-1 to disable;0 to keep only the latest
 
 REMOTE_BACKUP="true"
 REMOTE_HOST="" #xxx.xxx.xxx.xxx:PORT

@@ -30,7 +30,7 @@
 #	l'autore non si ritiene responsabile di qualsiasi danno o perdita di dati
 #	derivata dall'uso improprio o inconsapevole di questo script!
 
-VERSION=0.02
+VERSION=0.03
 
 ######################### Se non sei root non sei figo #########################
 if [[ $EUID -ne 0 ]]; then
@@ -156,7 +156,9 @@ tar -jcf "$BACKUP_PREFIX-$TIMESTAMP.tar.bz2" dump; rm -rf dump
 echo
 echo '#### ELIMINAZIONE VECCHI BACKUP ####'
 echo
-ls -dt "$BACKUP_LOCATION"* | tail -n $(KEEP_NUM++) | xargs rm -rf
+if [ "$KEEP_NUM" -gt -1 ]; then
+  ls -dt "$BACKUP_LOCATION"* | tail -n +$((KEEP_NUM+1)) | xargs rm -rf
+fi
 
 echo
 echo '#### INIZIO TRASFERIMENTO SU ALTRO SERVER ####'
