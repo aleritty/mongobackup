@@ -168,6 +168,10 @@ echo
 echo '#### ELIMINAZIONE VECCHI BACKUP ####'
 echo
 if [ "$KEEP_NUM" -gt -1 ]; then
+  echo
+  echo "questi backup verranno eliminati"
+  #conferma?
+  ls -dt "$BACKUP_LOCATION"* | tail -n +$((KEEP_NUM+1))
   ls -dt "$BACKUP_LOCATION"* | tail -n +$((KEEP_NUM+1)) | xargs rm -rf
 fi
 
