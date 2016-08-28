@@ -9,6 +9,15 @@ MONGO_ONLY_COLLECTION="" #-c $MONGO_ONLY_COLLECTION
 BACKUP_PREFIX="mongodb-YEAH" #BETTER NO SPACES
 BACKUP_LOCATION="/where/you/want/" #absolute path
 
+CRON_WHEN="* * * 4 4"
+#          - - - - -
+#          | | | | |
+#          | | | | ----- Day of week (0 - 7) (Sunday=0 or 7)
+#          | | | ------- Month (1 - 12)
+#          | | --------- Day of month (1 - 31)
+#          | ----------- Hour (0 - 23)
+#          ------------- Minute (0 - 59)
+
 KEEP_NUM=10 #-1 to disable;0 to keep only the latest
 
 REMOTE_BACKUP="true"
