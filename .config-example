@@ -1,0 +1,18 @@
+############à impostazioni da configurare ############
+MONGO_HOST="" #xxx.xxx.xxx.xxx:PORT
+MONGO_USE_AUTH="false"
+MONGO_USER=""
+MONGO_PW=""
+MONGO_ONLY_DB="" #--db $MONGO_ONLY_DB
+MONGO_ONLY_COLLECTION="" #-c $MONGO_ONLY_COLLECTION
+
+BACKUP_PREFIX="mongodb-YEAH" #BETTER NO SPACES
+
+REMOVE_OLD_BACKUP="true"
+KEEP_NUM="10"
+
+REMOTE_BACKUP="true"
+REMOTE_HOST="" #xxx.xxx.xxx.xxx:PORT
+REMOTE_USER=""
+REMOTE_KEY="/home/$USER/.ssh/id_rsa"
+REMOTE_LOCATION=""

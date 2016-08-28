@@ -1,37 +1,24 @@
 #!/bin/bash
 
-############à impostazioni da configurare ############
-MONGO_HOST="localhost" ##xxx.xxx.xxx.xxx:PORT
-MONGO_USE_AUTH="false"
-MONGO_USER=""
-MONGO_PW=""
-MONGO_ONLY_DB="" #--db $MONGO_ONLY_DB
-MONGO_ONLY_COLLECTION="" #-c $MONGO_ONLY_COLLECTION
-
-BACKUP_PREFIX="mongodb-CDAT" #PLEASE NO SPACES
-
-REMOVE_OLD_BACKUP="true"
-KEEP_NUM="10"
-
-REMOTE_BACKUP="true"
-REMOTE_HOST="10.220.98.35"
-REMOTE_USER="aleritty"
-REMOTE_KEY="/home/aleritty/.ssh/id_rsa"
-REMOTE_LOCATION="/home/aleritty/DBCDAT"
-
-
 ###INSTALLAZIONE CRONJOB (CON ESECUZIONE VIA BASH)
 ### Check cronjob
 ### Eliminazione cronjob
+
+###controllo aggiornamenti
 
 
 echo
 echo '#### INIZIO BACKUP ####'
 echo
-TIMESTAMP=$(date +"%F_%H-%M") #Formato timestamp
+
+TIMESTAMP=$(date +"%F_%H-%M")
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+source .config
+
 ###Controlla esistenza di mongodump senno chiedi ed installa
-MONGODUMP_PATH="/usr/bin/mongodump"
+MONGODUMP_PATH=`command -v mongodump 2>&1 || { echo >&2 "Mi serve mongodump, senza non posso fare nulla, installalo"; exit 1; }`
 
 if [ ! -d "$SCRIPT_DIR/DBbackup/" ]; then
   mkdir "$SCRIPT_DIR/DBbackup/"
@@ -48,7 +35,7 @@ tar -jcf "$BACKUP_PREFIX-$TIMESTAMP.tar.bz2" dump; rm -rf dump
 echo
 echo '#### ELIMINAZIONE VECCHI BACKUP ####'
 echo
-ls -dt "$SCRIPT_DIR/DBbackup/*" | tail -n $(KEEP_NUM++) | xargs rm -rf
+ls -dt "$SCRIPT_DIR/DBbackup/"* | tail -n $(KEEP_NUM++) | xargs rm -rf
 echo
 echo '#### INIZIO TRASFERIMENTO SU ALTRO SERVER ####'
 echo
