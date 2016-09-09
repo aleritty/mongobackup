@@ -30,7 +30,7 @@
 #	l'autore non si ritiene responsabile di qualsiasi danno o perdita di dati
 #	derivata dall'uso improprio o inconsapevole di questo script!
 
-VERSION=0.03
+VERSION=0.04
 
 ######################### Se non sei root non sei figo #########################
 if [[ $EUID -ne 0 ]]; then
@@ -65,7 +65,7 @@ upgradescript(){
   echo
   echo "Cerco aggiornamenti..."
   echo
-	gitversion=$(curl -L -s https://github.com/aleritty/mongobackup/raw/master/mongoBackup.sh | grep "^VERSION=")
+	gitversion=$(wget https://github.com/aleritty/mongobackup/raw/master/mongoBackup.sh -O - 2>/dev/null | grep "^VERSION=")
 	if [[ ${gitversion:8} > $VERSION ]];then
 		echo
     echo "Trovato aggiornamento..."
@@ -76,9 +76,6 @@ upgradescript(){
 		clear
     echo "Aggiornamento terminato, rilancia lo script per effettuare il backup"
 		exit 0
-		# else
-		# 	dialog --title "Canguro" --msgbox "Per questa volta salto l'aggiornamento" 5 60
-		# fi
 	else
     echo
     echo "Nessun aggiornamento necessario, hai l'ultima versione dello script"
@@ -178,7 +175,7 @@ fi
 echo
 echo '#### INIZIO TRASFERIMENTO SU ALTRO SERVER ####'
 echo
-rsync -av -e "ssh -i $REMOTE_KEY" "$BACKUP_LOCATION" $REMOTE_USER@$REMOTE_HOST:"$REMOTE_LOCATION"
+rsync -av -e "ssh -i $REMOTE_KEY" "$BACKUP_LOCATION" $REMOTE_USER@$REMOTE_HOST:"$REMOTE_LOCATION" --delete
 
 echo
 echo '#### BACKUP COMPLETATO ####'
