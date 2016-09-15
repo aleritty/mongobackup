@@ -30,7 +30,7 @@
 #	l'autore non si ritiene responsabile di qualsiasi danno o perdita di dati
 #	derivata dall'uso improprio o inconsapevole di questo script!
 
-VERSION=0.05
+VERSION=0.06
 
 ######################### Se non sei root non sei figo #########################
 if [[ $EUID -ne 0 ]]; then
@@ -83,44 +83,15 @@ upgradescript(){
   fi
 }
 
-###INSTALLAZIONE CRONJOB (CON ESECUZIONE VIA BASH)
-### Check cronjob per backup
-### Eliminazione cronjob per backup
-### idem per update?
-########################### Gestione anacron ###################################
-yo_cron(){
-	if [ ! -f "/etc/cron.daily/99Zkernelupdate" ];then
-		dialog --clear --backtitle "$maintitle" --title "Installazione in anacron" --yesno "Vuoi installare il controllo settimanale degli aggiornamenti del kernel? Verrà utilizzato anacron per il controllo. Verrai notificato ogni settimana se sono stati trovati aggiornamenti. E' necessario installare lo script a livello di sistema." 10 60
-		yesno=$?
-		if [ "$yesno" = "0" ];then
-			touch "/etc/cron.daily/99Zkernelupdate"
-			chmod +x "/etc/cron.daily/99Zkernelupdate"
-			echo '#!/bin/bash' > "/etc/cron.daily/99Zkernelupdate"
-			echo '/usr/sbin/kernel-update --chk' >> "/etc/cron.weekly/99Zkernelupdate"
-			if [ ! -e "/usr/sbin/kernel-update" ];then
-				yo_manage
-			fi
-			dialog --title "Installato" --msgbox "Controllo settimanale installato correttamente" 5 60
-		fi
-	else
-		dialog --clear --backtitle "$maintitle" --title "Disinstallazione da anacron" --yesno "Vuoi disinstallare il controllo settimanale degli aggiornamenti del kernel?" 10 60
-		yesno=$?
-		if [ "$yesno" = "0" ];then
-			rm /etc/cron.weekly/99Zkernelupdate
-			dialog --title "Disinstallato" --msgbox "Controllo disinstallato correttamente" 5 60
-		fi
-	fi
-  #######metodo alternativo con cron
-  # #write out current crontab
-  # crontab -l > mycron
-  # #echo new cron into cron file
-  # echo "* * * 4 4 /bin/bash "$SCRIPT_DIR"/mongoBackup.sh >> mycron
-  # #install new cron file
-  # crontab mycron
-  # rm mycron
-  # permette di scegliere meglio le ore quando farlo
-
-}
+################ INSTALLAZIONE CRONJOB #########################################
+crontab -l > /tmp/mycron-mongoBackup
+sed -i '/mongoBackup.sh/d' /tmp/mycron-mongoBackup
+cronLen=${#CRON_WHEN[@]}
+for (( i=0; i<${cronLen}; i++ )); do
+	echo "${CRON_WHEN[$i]} /bin/bash "$SCRIPT_DIR"/mongoBackup.sh" >> /tmp/mycron-mongoBackup
+done
+crontab /tmp/mycron-mongoBackup
+rm /tmp/mycron-mongoBackup
 
 ################# Sezione help ed invocazioni particolari ######################
 if [[ "$1" = "--help" || "$1" = "-h" ]]; then
