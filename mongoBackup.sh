@@ -30,7 +30,7 @@
 #	l'autore non si ritiene responsabile di qualsiasi danno o perdita di dati
 #	derivata dall'uso improprio o inconsapevole di questo script!
 
-VERSION=0.04
+VERSION=0.05
 
 ######################### Se non sei root non sei figo #########################
 if [[ $EUID -ne 0 ]]; then
@@ -43,8 +43,8 @@ fi
 TIMESTAMP=$(date +"%F_%H-%M")
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
-if [ -e ".config" ]; then
-  source .config
+if [ -e ".mongoBackup.cfg" ]; then
+  source .mongoBackup.cfg
 else
   echo
   echo "Non hai ancora compilato le configurazioni, fallo e poi rilanciami"
@@ -152,8 +152,12 @@ fi
 echo
 echo '#### INIZIO BACKUP ####'
 echo
-$MONGODUMP_PATH --host $MONGO_HOST
-#$MONGODUMP_PATH --host $MONGO_HOST -u $MONGO_USER -p $MONGO_PW
+
+if [[ "$MONGO_USE_AUTH" = "true" ]]; then
+	$MONGODUMP_PATH --host $MONGO_HOST -u $MONGO_USER -p $MONGO_PW $MONGO_ONLY_DB $MONGO_ONLY_COLLECTION
+else
+	$MONGODUMP_PATH --host $MONGO_HOST $MONGO_ONLY_DB $MONGO_ONLY_COLLECTION
+fi
 
 echo
 echo '#### COMPRESSIONE DATI ####'
@@ -172,11 +176,19 @@ if [ "$KEEP_NUM" -gt -1 ]; then
   ls -dt "$BACKUP_LOCATION"* | tail -n +$((KEEP_NUM+1)) | xargs rm -rf
 fi
 
-echo
-echo '#### INIZIO TRASFERIMENTO SU ALTRO SERVER ####'
-echo
-rsync -av -e "ssh -i $REMOTE_KEY" "$BACKUP_LOCATION" $REMOTE_USER@$REMOTE_HOST:"$REMOTE_LOCATION" --delete
+bkLen=${#REMOTE_HOST[@]}
+for (( i=0; i<${bkLen}; i++ ));
+do
+	echo
+	echo '#### INIZIO TRASFERIMENTO SUL SERVER '${REMOTE_HOST[$i]}' ####'
+	echo
+	rsync -av -e "ssh -i ${REMOTE_KEY[$i]}" "${BACKUP_LOCATION[$i]}" ${REMOTE_USER[$i]}@${REMOTE_HOST[$i]}:"${REMOTE_LOCATION[$i]}" --delete
+done
 
 echo
+echo
+echo '###########################'
 echo '#### BACKUP COMPLETATO ####'
+echo '###########################'
+echo
 echo
