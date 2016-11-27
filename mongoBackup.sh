@@ -84,14 +84,16 @@ upgradescript(){
 }
 
 ################ INSTALLAZIONE CRONJOB #########################################
-crontab -l > /tmp/mycron-mongoBackup
-sed -i '/mongoBackup.sh/d' /tmp/mycron-mongoBackup
 cronLen=${#CRON_WHEN[@]}
-for (( i=0; i<${cronLen}; i++ )); do
-	echo "${CRON_WHEN[$i]} /bin/bash "$SCRIPT_DIR"/mongoBackup.sh" >> /tmp/mycron-mongoBackup
-done
-crontab /tmp/mycron-mongoBackup
-rm /tmp/mycron-mongoBackup
+if [ "$cronLen" -gt 0 ]; then
+	crontab -l > /tmp/mycron-mongoBackup
+	sed -i '/mongoBackup.sh/d' /tmp/mycron-mongoBackup
+	for (( i=0; i<${cronLen}; i++ )); do
+		echo "${CRON_WHEN[$i]} /bin/bash "$SCRIPT_DIR"/mongoBackup.sh" >> /tmp/mycron-mongoBackup
+	done
+	crontab /tmp/mycron-mongoBackup
+	rm /tmp/mycron-mongoBackup
+fi
 
 ################# Sezione help ed invocazioni particolari ######################
 if [[ "$1" = "--help" || "$1" = "-h" ]]; then
@@ -104,6 +106,7 @@ Usage:
 sudo /bin/bash mongoBackup.sh [ --upd ]
 
 --upd 	Aggiorna lo script all'ultima versione
+--anon	Crea una versione anonimizzata dei dati
 --help	Mostra questa schermata
 
 L'invocazione normale senza parametri lancia il backup secondo le configurazioni
@@ -136,6 +139,25 @@ else
 	$MONGODUMP_PATH --host $MONGO_HOST $DBSTRING $COLSTRING
 fi
 
+if [[ "$1" = "--anon" || "$1" = "-a" ]]; then
+	echo
+	echo "Anonimizzo i dati e salvo la copia anonimizzata"
+   cp -r dump anon-dump
+	AnLen=${#ANON_SCHEMA[@]}
+   for (( i=0; i<${AnLen}; i++ ));
+   do
+	   echo
+	   echo '#### ANONIMIZZO '${ANON_SCHEMA[$i]}' ####'
+	   echo
+	   #la struttura di esempio da sostituire è questa:
+	   #"foto" : ""
+	   #quindi cerco
+	   #${ANON_SCHEMA[$i]}' : ",'
+	   # poi vado a cercare il corrispondente apice e taglio via
+	   sed -i anon-dump/${ANON_COLLECTION[$i]} 's///g'
+   done
+fi
+
 echo
 echo '#### COMPRESSIONE DATI ####'
 echo '#### può richiedere un po di tempo ####'
@@ -148,9 +170,10 @@ echo
 if [ "$KEEP_NUM" -gt -1 ]; then
   echo
   echo "questi backup verranno eliminati"
+  echo "Altri files non verranno toccati"
   #conferma?
-  ls -dt "$BACKUP_LOCATION"* | tail -n +$((KEEP_NUM+1))
-  ls -dt "$BACKUP_LOCATION"* | tail -n +$((KEEP_NUM+1)) | xargs rm -rf
+  ls -dt "$BACKUP_LOCATION/$BACKUP_PREFIX"* | tail -n +$((KEEP_NUM+1)) #inserita per mostrare i nomi dei file che vengono cancellati
+  ls -dt "$BACKUP_LOCATION/$BACKUP_PREFIX"* | tail -n +$((KEEP_NUM+1)) | xargs rm -rf
 fi
 
 bkLen=${#REMOTE_HOST[@]}
@@ -159,7 +182,11 @@ do
 	echo
 	echo '#### INIZIO TRASFERIMENTO SUL SERVER '${REMOTE_HOST[$i]}' ####'
 	echo
-	rsync -av -e "ssh -i ${REMOTE_KEY[$i]}" "${BACKUP_LOCATION[$i]}" ${REMOTE_USER[$i]}@${REMOTE_HOST[$i]}:"${REMOTE_LOCATION[$i]}" --delete
+	RC=1 
+	while [[ $RC -ne 0 ]]; do
+		rsync -aqu --append --partial -e "ssh -i ${REMOTE_KEY[$i]}" "${BACKUP_LOCATION[$i]}" ${REMOTE_USER[$i]}@${REMOTE_HOST[$i]}:"${REMOTE_LOCATION[$i]}" --delete-after
+		RC=$?
+	done
 done
 
 echo
